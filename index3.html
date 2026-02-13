@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌊 Ocean Science Word SUPER EPIC 🚀</title>
+
+<style>
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(to top,#001f3f,#0074D9,#7FDBFF);
+overflow:hidden;
+text-align:center;
+color:#e0f7ff;
+}
+
+h1{
+margin-top:15px;
+text-shadow:0 0 15px #00e5ff;
+}
+
+.game{
+background:rgba(0,0,0,0.3);
+width:95%;
+max-width:600px;
+margin:20px auto;
+padding:20px;
+border-radius:20px;
+box-shadow:0 0 25px rgba(0,229,255,0.6);
+backdrop-filter:blur(8px);
+}
+
+input{
+padding:10px;
+border-radius:20px;
+border:none;
+width:70%;
+text-align:center;
+}
+
+button{
+padding:10px 20px;
+border:none;
+border-radius:20px;
+background:#00bcd4;
+color:white;
+cursor:pointer;
+}
+button:hover{ background:#0097a7; }
+
+.progress-bar{
+width:100%;
+background:#004d66;
+border-radius:20px;
+margin:10px 0;
+}
+.progress{
+height:10px;
+background:#00e5ff;
+width:0%;
+border-radius:20px;
+transition:0.3s;
+}
+
+.correct{ color:#00ff88; animation:pop 0.3s; }
+.wrong{ color:#ff5252; animation:shake 0.3s; }
+
+@keyframes pop{ from{transform:scale(0.5);} to{transform:scale(1);} }
+@keyframes shake{
+0%,100%{transform:translateX(0);}
+25%{transform:translateX(-5px);}
+75%{transform:translateX(5px);}
+}
+
+/* Bubble */
+.bubble{
+position:absolute;
+bottom:-50px;
+width:12px;
+height:12px;
+background:rgba(255,255,255,0.5);
+border-radius:50%;
+animation:rise 6s linear infinite;
+}
+@keyframes rise{
+0%{transform:translateY(0);}
+100%{transform:translateY(-900px);opacity:0;}
+}
+
+/* Fish */
+.fish{
+position:absolute;
+font-size:30px;
+top:300px;
+animation:swim 30s linear infinite;
+}
+@keyframes swim{
+0%{left:-50px;}
+100%{left:110%;}
+}
+
+</style>
+</head>
+<body>
+
+<h1>🌊 Ocean Science Word SUPER EPIC 🚀</h1>
+
+<div class="game">
+<h3 id="level"></h3>
+<p id="question"></p>
+
+<div class="progress-bar">
+<div class="progress" id="progress"></div>
+</div>
+
+<input type="text" id="answer" placeholder="Jawaban...">
+<br><br>
+<button onclick="checkAnswer()">Jawab</button>
+
+<p id="feedback"></p>
+
+<p>
+❤️ <span id="lives"></span> |
+🏆 <span id="score"></span> |
+🔥 Combo: <span id="combo"></span> |
+⏳ <span id="timer"></span>s
+</p>
+
+<h4>🏅 Leaderboard</h4>
+<ol id="leaderboard"></ol>
+</div>
+
+<div class="fish">🐠</div>
+
+<script>
+const masterQuestions=[
+{q:"Ilmu tentang makhluk hidup",a:"biologi"},
+{q:"Satuan SI massa",a:"kilogram"},
+{q:"Gaya tarik bumi",a:"gravitasi"},
+{q:"Organel respirasi sel",a:"mitokondria"},
+{q:"Alat ukur suhu",a:"termometer"},
+{q:"Hukum Newton pertama",a:"inersia"},
+{q:"Satuan arus listrik",a:"ampere"},
+{q:"Proses cair ke gas",a:"menguap"},
+{q:"Jaringan angkut air",a:"xilem"},
+{q:"Besaran memiliki arah",a:"vektor"},
+{q:"Proses fotosintesis menghasilkan",a:"glukosa"},
+{q:"Zat penyusun inti atom",a:"proton"},
+{q:"Lapisan atmosfer terluar",a:"eksosfer"},
+{q:"Perubahan wujud gas ke cair",a:"mengembun"},
+{q:"Satuan energi",a:"joule"}
+];
+
+// Gandakan hingga 100+
+while(masterQuestions.length<100){
+masterQuestions.push(...masterQuestions);
+}
+
+let level=1,index=0,lives=3,score=0,combo=0,time=15;
+let levelQuestions=[];
+let timerInterval;
+
+function shuffle(array){
+return array.sort(()=>Math.random()-0.5);
+}
+
+function startLevel(){
+levelQuestions=shuffle([...masterQuestions]).slice(0,10);
+index=0;
+time=15-(level-1);
+loadQuestion();
+}
+
+function loadQuestion(){
+document.getElementById("level").textContent="Level "+level;
+document.getElementById("question").textContent=levelQuestions[index].q;
+document.getElementById("answer").value="";
+document.getElementById("progress").style.width=(index*10)+"%";
+document.getElementById("lives").textContent=lives;
+document.getElementById("score").textContent=score;
+document.getElementById("combo").textContent=combo;
+document.getElementById("timer").textContent=time;
+
+clearInterval(timerInterval);
+timerInterval=setInterval(()=>{
+time--;
+document.getElementById("timer").textContent=time;
+if(time<=0){ loseLife(); }
+},1000);
+}
+
+function checkAnswer(){
+const user=document.getElementById("answer").value.toLowerCase();
+if(user===levelQuestions[index].a){
+combo++;
+score+=10+(combo*2);
+index++;
+if(index>=10){
+level++;
+if(level>10){ endGame(); return; }
+startLevel();
+}else{
+loadQuestion();
+}
+}else{
+combo=0;
+loseLife();
+}
+}
+
+function loseLife(){
+clearInterval(timerInterval);
+lives--;
+if(lives<=0){ endGame(); }
+else{ loadQuestion(); }
+}
+
+function endGame(){
+saveScore(score);
+alert("Game Selesai! Skor: "+score);
+location.reload();
+}
+
+function saveScore(newScore){
+let scores=JSON.parse(localStorage.getItem("oceanScores"))||[];
+scores.push(newScore);
+scores.sort((a,b)=>b-a);
+scores=scores.slice(0,5);
+localStorage.setItem("oceanScores",JSON.stringify(scores));
+displayLeaderboard();
+}
+
+function displayLeaderboard(){
+let scores=JSON.parse(localStorage.getItem("oceanScores"))||[];
+const list=document.getElementById("leaderboard");
+list.innerHTML="";
+scores.forEach(s=>{
+let li=document.createElement("li");
+li.textContent=s;
+list.appendChild(li);
+});
+}
+
+displayLeaderboard();
+startLevel();
+
+/* Bubble */
+function createBubble(){
+const bubble=document.createElement("div");
+bubble.classList.add("bubble");
+bubble.style.left=Math.random()*window.innerWidth+"px";
+document.body.appendChild(bubble);
+setTimeout(()=>bubble.remove(),6000);
+}
+setInterval(createBubble,600);
+</script>
+
+</body>
+</html>
